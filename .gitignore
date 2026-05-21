@@ -10,12 +10,16 @@ target/
 # Node / Vue
 node_modules/
 dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+.npm/
+.yarn/
+
+# Logs
+*.log
+logs/
 
 # Env
 .env
+.env.*
 *.local
 
 # OS
