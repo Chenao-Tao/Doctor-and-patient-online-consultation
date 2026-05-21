@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.consultation.mapper.ConsultationMessageMapper">
+
+    <resultMap type="com.ruoyi.consultation.domain.ConsultationMessage" id="MessageResult">
+        <result property="messageId"       column="message_id" />
+        <result property="consultationId"  column="consultation_id" />
+        <result property="senderId"        column="sender_id" />
+        <result property="senderType"      column="sender_type" />
+        <result property="messageType"     column="message_type" />
+        <result property="content"         column="content" />
+        <result property="createTime"      column="create_time" />
+        <result property="senderName"      column="sender_name" />
+    </resultMap>
+
+    <select id="selectMessagesByConsultationId" parameterType="Long" resultMap="MessageResult">
+        select m.message_id, m.consultation_id, m.sender_id, m.sender_type,
+               m.message_type, m.content, m.create_time,
+               u.nick_name as sender_name
+        from t_consultation_message m
+        left join sys_user u on m.sender_id = u.user_id
+        where m.consultation_id = #{consultationId}
+        order by m.create_time asc
+    </select>
+
+    <insert id="insertMessage" parameterType="com.ruoyi.consultation.domain.ConsultationMessage" useGeneratedKeys="true" keyProperty="messageId">
+        insert into t_consultation_message (
+            consultation_id, sender_id, sender_type, message_type, content, create_time
+        ) values (
+            #{consultationId}, #{senderId}, #{senderType}, #{messageType}, #{content}, #{createTime}
+        )
+    </insert>
+
+</mapper>
