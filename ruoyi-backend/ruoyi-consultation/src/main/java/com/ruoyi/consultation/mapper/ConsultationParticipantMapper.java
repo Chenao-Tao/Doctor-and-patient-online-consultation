@@ -1,6 +1,7 @@
 package com.ruoyi.consultation.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.ruoyi.consultation.domain.ConsultationParticipant;
 
 /**
@@ -34,6 +35,18 @@ public interface ConsultationParticipantMapper
      * 修改参与者
      */
     public int updateParticipant(ConsultationParticipant participant);
+
+    /**
+     * 标记参与者已加入房间
+     */
+    public int markParticipantJoined(@Param("consultationId") Long consultationId,
+            @Param("userId") Long userId,
+            @Param("livekitIdentity") String livekitIdentity);
+
+    /**
+     * 标记参与者已离开房间
+     */
+    public int markParticipantLeft(@Param("consultationId") Long consultationId, @Param("userId") Long userId);
 
     /**
      * 删除参与者

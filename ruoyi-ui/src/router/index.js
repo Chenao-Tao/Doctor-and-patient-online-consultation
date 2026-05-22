@@ -48,6 +48,13 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/consultation/room/:id(\\d+)',
+    component: () => import('@/views/consultation/room'),
+    hidden: true,
+    name: 'ConsultationRoom',
+    meta: { title: '问诊房间', activeMenu: '/consultation/list' }
+  },
+  {
     path: "/:pathMatch(.*)*",
     component: () => import('@/views/error/404'),
     hidden: true
@@ -177,13 +184,6 @@ export const dynamicRoutes = [
         meta: { title: '问诊详情', activeMenu: '/consultation/list' }
       }
     ]
-  },
-  {
-    path: '/consultation/room/:id(\\d+)',
-    component: () => import('@/views/consultation/room'),
-    hidden: true,
-    name: 'ConsultationRoom',
-    meta: { title: '问诊房间', activeMenu: '/consultation/list' }
   }
 ]
 

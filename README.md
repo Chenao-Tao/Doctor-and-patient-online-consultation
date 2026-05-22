@@ -40,3 +40,49 @@
 - 独立封装 ruoyi-consultation 模块，降低业务耦合
 - 接入 LiveKit 实现实时音视频问诊能力
 - 设计问诊状态流转，模拟真实互联网医院业务流程
+
+## 本地启动
+
+### 1. 准备 LiveKit
+
+首次运行下载本地 LiveKit Server:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install-livekit.ps1
+```
+
+单独启动 LiveKit:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start-livekit.ps1
+```
+
+本地开发默认配置:
+
+```text
+LIVEKIT_API_KEY=devkey
+LIVEKIT_API_SECRET=secret
+LIVEKIT_WS_URL=ws://127.0.0.1:7880
+```
+
+### 2. 启动整套服务
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\start-all.ps1 -Rebuild
+```
+
+启动后访问:
+
+```text
+后端: http://localhost:8081
+前端: http://localhost:80
+LiveKit: ws://127.0.0.1:7880
+```
+
+### 3. 测试视频会诊
+
+1. 登录管理员创建问诊单, 选择医生和病人。
+2. 医生账号登录后点击接诊, 再进入房间。
+3. 病人账号用另一个浏览器登录, 进入同一个问诊房间。
+4. 两边允许摄像头和麦克风权限。
+5. 测试音视频、聊天、挂断和结束问诊。

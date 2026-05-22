@@ -2,7 +2,7 @@
   <div class="consultation-room">
     <!-- 顶部栏 -->
     <div class="room-header">
-      <el-button text @click="goBack" class="back-btn">
+      <el-button text @click="handleBack" class="back-btn">
         <el-icon><ArrowLeft /></el-icon>返回
       </el-button>
       <span class="room-title">问诊 #{{ consultationId }}</span>
@@ -73,11 +73,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Microphone, VideoCamera, PhoneFilled } from '@element-plus/icons-vue'
-import { getConsultation, endConsultation, getConsultationToken } from '@/api/consultation/consultation'
+import { endConsultation, getConsultationToken, leaveConsultationRoom } from '@/api/consultation/consultation'
 import { sendMessage as sendMessageApi } from '@/api/consultation/message'
 import LiveKitRoom from '@/components/LiveKit/LiveKitRoom.vue'
 
@@ -95,6 +95,8 @@ const micEnabled = ref(true)
 const cameraEnabled = ref(true)
 const userType = ref('')
 let msgIdCounter = 0
+let hasEnteredRoom = false
+let leaveReported = false
 
 onMounted(async () => {
   try {
@@ -112,11 +114,13 @@ onMounted(async () => {
 
 function onConnected() {
   isConnected.value = true
+  hasEnteredRoom = true
   ElMessage.success('已连接问诊房间')
 }
 
 function onDisconnected() {
   isConnected.value = false
+  reportLeave()
 }
 
 function onError(err) {
@@ -164,7 +168,6 @@ async function sendMessage() {
   try {
     await sendMessageApi({
       consultationId: consultationId,
-      senderType: userType.value,
       messageType: '1',
       content: text
     })
@@ -190,13 +193,18 @@ async function toggleCamera() {
   }
 }
 
-function handleDisconnect() {
-  ElMessageBox.confirm('确定要离开问诊房间吗？', '提示', { type: 'warning' }).then(() => {
+function handleBack() {
+  ElMessageBox.confirm('确定要离开问诊房间吗？', '提示', { type: 'warning' }).then(async () => {
     if (livekitRef.value) {
-      livekitRef.value.disconnect()
+      await livekitRef.value.disconnect()
     }
+    await reportLeave()
     goBack()
   })
+}
+
+function handleDisconnect() {
+  handleBack()
 }
 
 function handleEnd() {
@@ -204,15 +212,30 @@ function handleEnd() {
     if (livekitRef.value) {
       await livekitRef.value.disconnect()
     }
+    await reportLeave()
     await endConsultation(consultationId)
     ElMessage.success('问诊已结束')
     goBack()
   })
 }
 
+async function reportLeave() {
+  if (!hasEnteredRoom || leaveReported) return
+  leaveReported = true
+  try {
+    await leaveConsultationRoom(consultationId)
+  } catch (e) {
+    console.warn('离开房间状态上报失败', e)
+  }
+}
+
 function goBack() {
   router.push('/consultation/list')
 }
+
+onBeforeUnmount(() => {
+  reportLeave()
+})
 </script>
 
 <style scoped>

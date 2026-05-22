@@ -44,4 +44,16 @@ public class ConsultationParticipantServiceImpl implements IConsultationParticip
     {
         return participantMapper.updateParticipant(participant);
     }
+
+    @Override
+    public int markParticipantJoined(Long consultationId, Long userId, String livekitIdentity)
+    {
+        return participantMapper.markParticipantJoined(consultationId, userId, livekitIdentity);
+    }
+
+    @Override
+    public int markParticipantLeft(Long consultationId, Long userId)
+    {
+        return participantMapper.markParticipantLeft(consultationId, userId);
+    }
 }

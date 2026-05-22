@@ -56,6 +56,9 @@
         <if test="roomName != null and roomName != ''">
             AND c.room_name = #{roomName}
         </if>
+        <if test="params.participantUserId != null">
+            AND (c.patient_id = #{params.participantUserId} OR c.doctor_id = #{params.participantUserId})
+        </if>
         order by c.create_time desc
     </select>
 

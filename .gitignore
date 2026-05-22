@@ -17,6 +17,9 @@ dist/
 *.log
 logs/
 
+# Local tools
+tools/livekit/
+
 # Env
 .env
 .env.*

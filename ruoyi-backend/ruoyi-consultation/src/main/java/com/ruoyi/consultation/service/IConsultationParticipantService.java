@@ -29,4 +29,14 @@ public interface IConsultationParticipantService
      * 修改参与者（如标记加入/离开时间）
      */
     public int updateParticipant(ConsultationParticipant participant);
+
+    /**
+     * 标记当前参与者已进入LiveKit房间
+     */
+    public int markParticipantJoined(Long consultationId, Long userId, String livekitIdentity);
+
+    /**
+     * 标记当前参与者已离开LiveKit房间
+     */
+    public int markParticipantLeft(Long consultationId, Long userId);
 }

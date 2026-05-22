@@ -75,6 +75,14 @@ export function getConsultationToken(consultationId) {
   })
 }
 
+// 离开LiveKit房间
+export function leaveConsultationRoom(consultationId) {
+  return request({
+    url: '/consultation/consultation/' + consultationId + '/leave',
+    method: 'post'
+  })
+}
+
 // 查询参与者列表
 export function listParticipants(consultationId) {
   return request({

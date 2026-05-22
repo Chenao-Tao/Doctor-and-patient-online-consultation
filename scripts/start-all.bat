@@ -8,6 +8,16 @@ rem Try to start services (requires admin)
 net start MySQL80 >nul 2>&1
 net start rediszt3 >nul 2>&1
 
+if not defined LIVEKIT_API_KEY set "LIVEKIT_API_KEY=devkey"
+if not defined LIVEKIT_API_SECRET set "LIVEKIT_API_SECRET=secret"
+if not defined LIVEKIT_WS_URL set "LIVEKIT_WS_URL=ws://127.0.0.1:7880"
+
+if exist "%ROOT%\tools\livekit\livekit-server.exe" (
+  start "livekit-server" /min "%ROOT%\tools\livekit\livekit-server.exe" --dev
+) else (
+  echo LiveKit Server not found. Run: powershell -ExecutionPolicy Bypass -File scripts\install-livekit.ps1
+)
+
 rem Resolve Java executable
 set "JAVA_EXE=java"
 if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" set "JAVA_EXE=%JAVA_HOME%\bin\java.exe"
@@ -29,5 +39,6 @@ start "ruoyi-frontend" cmd /k cd /d "%ROOT%\ruoyi-ui" ^&^& if not exist node_mod
 
 echo Backend: http://localhost:8081
 echo Frontend: http://localhost:80
+echo LiveKit: %LIVEKIT_WS_URL%
 
 endlocal

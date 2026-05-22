@@ -151,8 +151,8 @@ livekit:
   # API Key（从LiveKit Cloud控制台获取）
   api-key: ${LIVEKIT_API_KEY:devkey}
   # API Secret（仅存后端，不下发前端）
-  api-secret: ${LIVEKIT_API_SECRET:devsecret}
+  api-secret: ${LIVEKIT_API_SECRET:secret}
   # WebSocket连接地址
-  ws-url: ${LIVEKIT_WS_URL:wss://your-project.livekit.cloud}
+  ws-url: ${LIVEKIT_WS_URL:ws://127.0.0.1:7880}
   # Token有效期（小时）
   token-ttl: 6

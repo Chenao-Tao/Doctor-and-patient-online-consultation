@@ -17,9 +17,8 @@ import com.ruoyi.common.core.controller.BaseController;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.consultation.domain.Consultation;
-import com.ruoyi.consultation.domain.ConsultationParticipant;
 import com.ruoyi.consultation.service.IConsultationParticipantService;
 import com.ruoyi.consultation.service.IConsultationService;
 import com.ruoyi.consultation.service.ILiveKitTokenService;
@@ -49,6 +48,10 @@ public class ConsultationController extends BaseController
     @GetMapping("/list")
     public TableDataInfo list(Consultation consultation)
     {
+        if (!SecurityUtils.isAdmin())
+        {
+            consultation.getParams().put("participantUserId", getUserId());
+        }
         startPage();
         List<Consultation> list = consultationService.selectConsultationList(consultation);
         return getDataTable(list);
@@ -61,7 +64,16 @@ public class ConsultationController extends BaseController
     @GetMapping("/{consultationId}")
     public AjaxResult getInfo(@PathVariable Long consultationId)
     {
-        return success(consultationService.selectConsultationById(consultationId));
+        Consultation consultation = consultationService.selectConsultationById(consultationId);
+        if (consultation == null)
+        {
+            return error("问诊不存在");
+        }
+        if (!canAccessConsultation(consultation))
+        {
+            return error("无权查看该问诊");
+        }
+        return success(consultation);
     }
 
     /**
@@ -112,7 +124,25 @@ public class ConsultationController extends BaseController
     @PutMapping("/{consultationId}/start")
     public AjaxResult start(@PathVariable Long consultationId)
     {
-        return toAjax(consultationService.startConsultation(consultationId, getUserId()));
+        Consultation consultation = consultationService.selectConsultationById(consultationId);
+        if (consultation == null)
+        {
+            return error("问诊不存在");
+        }
+        if (!"0".equals(consultation.getStatus()))
+        {
+            return error("只有待接诊状态可以接诊");
+        }
+        if (!SecurityUtils.isAdmin()
+                && consultation.getDoctorId() != null
+                && !getUserId().equals(consultation.getDoctorId()))
+        {
+            return error("当前用户不是该问诊指定医生，无法接诊");
+        }
+
+        Long doctorId = consultation.getDoctorId() != null ? consultation.getDoctorId() : getUserId();
+        int rows = consultationService.startConsultation(consultationId, doctorId);
+        return rows > 0 ? success() : error("接诊失败，请刷新后重试");
     }
 
     /**
@@ -123,6 +153,15 @@ public class ConsultationController extends BaseController
     @PutMapping("/{consultationId}/end")
     public AjaxResult end(@PathVariable Long consultationId)
     {
+        Consultation consultation = consultationService.selectConsultationById(consultationId);
+        if (consultation == null)
+        {
+            return error("问诊不存在");
+        }
+        if (!canManageConsultation(consultation))
+        {
+            return error("无权结束该问诊");
+        }
         return toAjax(consultationService.endConsultation(consultationId));
     }
 
@@ -134,6 +173,15 @@ public class ConsultationController extends BaseController
     @PutMapping("/{consultationId}/cancel")
     public AjaxResult cancel(@PathVariable Long consultationId)
     {
+        Consultation consultation = consultationService.selectConsultationById(consultationId);
+        if (consultation == null)
+        {
+            return error("问诊不存在");
+        }
+        if (!canManageConsultation(consultation))
+        {
+            return error("无权取消该问诊");
+        }
         return toAjax(consultationService.cancelConsultation(consultationId));
     }
 
@@ -178,15 +226,40 @@ public class ConsultationController extends BaseController
         );
 
         // 更新参与者状态为已加入
-        ConsultationParticipant participant = participantService.selectByConsultationAndUser(consultationId, getUserId());
-        if (participant != null && !"1".equals(participant.getStatus()))
-        {
-            participant.setStatus("1");
-            participant.setJoinTime(DateUtils.getNowDate());
-            participant.setLivekitIdentity("user_" + getUserId());
-            participantService.updateParticipant(participant);
-        }
+        participantService.markParticipantJoined(consultationId, getUserId(), "user_" + getUserId());
 
         return success(connectionInfo);
+    }
+
+    /**
+     * 离开LiveKit房间
+     */
+    @PreAuthorize("@ss.hasPermi('consultation:consultation:token')")
+    @PostMapping("/{consultationId}/leave")
+    public AjaxResult leaveRoom(@PathVariable Long consultationId)
+    {
+        Consultation consultation = consultationService.selectConsultationById(consultationId);
+        if (consultation == null)
+        {
+            return error("问诊不存在");
+        }
+        if (consultationService.resolveUserRole(consultationId, getUserId()) == null)
+        {
+            return error("无权离开该问诊房间");
+        }
+        participantService.markParticipantLeft(consultationId, getUserId());
+        return success();
+    }
+
+    private boolean canAccessConsultation(Consultation consultation)
+    {
+        return SecurityUtils.isAdmin()
+                || getUserId().equals(consultation.getDoctorId())
+                || getUserId().equals(consultation.getPatientId());
+    }
+
+    private boolean canManageConsultation(Consultation consultation)
+    {
+        return SecurityUtils.isAdmin() || getUserId().equals(consultation.getDoctorId());
     }
 }

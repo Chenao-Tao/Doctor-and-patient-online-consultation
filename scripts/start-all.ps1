@@ -1,5 +1,6 @@
 param(
-  [switch]$Rebuild
+  [switch]$Rebuild,
+  [switch]$SkipLiveKit
 )
 
 $root = (Resolve-Path (Join-Path $PSScriptRoot ".."))
@@ -21,6 +22,18 @@ function Start-ServiceIfExists {
 
 Start-ServiceIfExists -Name "MySQL80"
 Start-ServiceIfExists -Name "rediszt3"
+
+$env:LIVEKIT_API_KEY = if ($env:LIVEKIT_API_KEY) { $env:LIVEKIT_API_KEY } else { "devkey" }
+$env:LIVEKIT_API_SECRET = if ($env:LIVEKIT_API_SECRET) { $env:LIVEKIT_API_SECRET } else { "secret" }
+$env:LIVEKIT_WS_URL = if ($env:LIVEKIT_WS_URL) { $env:LIVEKIT_WS_URL } else { "ws://127.0.0.1:7880" }
+
+if (-not $SkipLiveKit) {
+  $livekitScript = Join-Path $PSScriptRoot "start-livekit.ps1"
+  & $livekitScript
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "LiveKit was not started. Install it with scripts\install-livekit.ps1, or pass -SkipLiveKit to use an external LiveKit service."
+  }
+}
 
 $backendJar = Join-Path $root "ruoyi-backend\ruoyi-admin\target\ruoyi-admin.jar"
 if ($Rebuild -or !(Test-Path $backendJar)) {
@@ -51,3 +64,4 @@ Start-Process -FilePath "powershell" -WorkingDirectory $frontendDir -ArgumentLis
 
 Write-Host "Backend: http://localhost:8081"
 Write-Host "Frontend: http://localhost:80"
+Write-Host "LiveKit: $($env:LIVEKIT_WS_URL)"

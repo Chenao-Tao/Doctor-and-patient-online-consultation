@@ -62,6 +62,25 @@
         where participant_id = #{participantId}
     </update>
 
+    <update id="markParticipantJoined">
+        update t_consultation_participant
+        set join_time = sysdate(),
+            leave_time = null,
+            livekit_identity = #{livekitIdentity},
+            status = '1'
+        where consultation_id = #{consultationId}
+          and user_id = #{userId}
+    </update>
+
+    <update id="markParticipantLeft">
+        update t_consultation_participant
+        set leave_time = sysdate(),
+            status = '2'
+        where consultation_id = #{consultationId}
+          and user_id = #{userId}
+          and status = '1'
+    </update>
+
     <delete id="deleteParticipantById" parameterType="Long">
         delete from t_consultation_participant where participant_id = #{participantId}
     </delete>
